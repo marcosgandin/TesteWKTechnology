@@ -1,0 +1,26 @@
+unit Controller.Pedidos.Dados.Gerais;
+
+interface
+
+uses
+  StrUtils,
+  SysUtils,
+  Model.Pedidos.Dados.Gerais;
+
+type
+  TControllerPedidosDadosGerais = class
+  public
+    procedure Salvar(objPedDadosGerais: TPedidosDadosGerais);
+  end;
+
+implementation
+
+{ TControllerPedidosDadosGerais }
+
+procedure TControllerPedidosDadosGerais.Salvar(
+  objPedDadosGerais: TPedidosDadosGerais);
+begin
+  objPedDadosGerais.Salvar(objPedDadosGerais);
+end;
+
+end.

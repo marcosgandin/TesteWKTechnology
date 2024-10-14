@@ -1,0 +1,25 @@
+unit Controller.Clientes;
+
+interface
+
+uses
+  Windows, SysUtils, Classes, Controls, Forms, ComCtrls,
+  Firedac.Stan.Param, FireDAC.Comp.Client, Data.DB, unit_funcoes,
+  Model.Clientes;
+
+type
+  TControllerClientes = class
+  public
+    function Salvar(const objClientes: TClientes): string;
+  end;
+
+implementation
+
+{ TControllerClientes }
+
+function TControllerClientes.Salvar(const objClientes: TClientes): string;
+begin
+  objClientes.Salvar(objClientes);
+end;
+
+end.

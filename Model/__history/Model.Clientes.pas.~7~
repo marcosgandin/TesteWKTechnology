@@ -1,0 +1,159 @@
+unit Model.Clientes;
+
+interface
+
+uses
+  Windows, SysUtils, Classes, Controls, Forms, ComCtrls,
+  Firedac.Stan.Param, FireDAC.Comp.Client, Data.DB, unit_funcoes;
+
+type
+  TClientes = class
+    private
+      FConexao: TFdConnection;
+      FId_Clientes : Integer;
+      FCli_Nome : string;
+      FCli_Cidade : string;
+      FCli_UF : string;
+    public
+      property Conexao: TFdConnection read FConexao write FConexao;
+      property IdCliente : Integer read FId_Clientes write FId_Clientes;
+      property Nome: string read FCli_Nome write FCli_Nome;
+      property Cidade: string read FCli_Cidade write FCli_Cidade;
+      property UF: string read FCli_UF write FCli_UF;
+
+      constructor Create( Conexao: TFdConnection);
+      destructor Destroy; override;
+
+      procedure Salvar(const objClientes: TClientes);
+      function fnc_inserir_alterar( TipoOperacao: string; out Erro: string ): Boolean;
+      function fnc_consulta( pChave: Integer ): TFDQuery;
+  end;
+
+var
+  QryConsulta: TFDQuery;
+
+implementation
+
+{ TClientes }
+
+constructor TClientes.Create(Conexao: TFdConnection);
+begin
+  FConexao := Conexao;
+
+  QryConsulta := TFDQuery.Create( nil );
+  QryConsulta.Connection := FConexao;
+end;
+
+destructor TClientes.Destroy;
+begin
+  QryConsulta.Destroy;
+  inherited;
+end;
+
+function TClientes.fnc_consulta( pChave: Integer ): TFDQuery;
+begin
+  try
+    FConexao.Connected := False;
+    FConexao.Connected := True;
+
+    QryConsulta.Close;
+    QryConsulta.SQL.Clear;
+    QryConsulta.SQL.Add('Select id_clientes, cli_nome, cli_cidade, cli_uf ');
+    QryConsulta.SQL.Add('From clientes ');
+
+    if ( pChave > 0 ) then
+    begin
+      QryConsulta.SQL.Add('Where id_clientes = :id_clientes ');
+      QryConsulta.ParamByName('id_clientes').AsInteger := pChave;
+    end;
+
+    QryConsulta.Open;
+  finally
+    Result := QryConsulta;
+  end;
+end;
+
+function TClientes.fnc_inserir_alterar(TipoOperacao: string;
+  out Erro: string): Boolean;
+var
+  QryInserir: TFDQuery;
+begin
+  try
+    try
+      FConexao.Connected := False;
+      FConexao.Connected := True;
+
+      QryInserir := TFDQuery.Create( nil );
+      QryInserir.Connection := FConexao;
+
+      QryInserir.Close;
+      QryInserir.SQL.Clear;
+
+      if TipoOperacao = 'INSERIR' then
+      begin
+        QryInserir.SQL.Add('Insert into clientes (id_clientes, cli_nome, cli_cidade, cli_uf) ');
+        QryInserir.SQL.Add('Values (:p_id_clientes, :p_cli_nome, :p_cli_cidade, :p_cli_uf) ');
+
+        QryInserir.ParamByName('p_id_clientes').AsInteger := fnc_proximo_codigo('clientes','id_clientes');
+      end
+      else
+      begin
+        QryInserir.SQL.Add('Update clientes set ');
+        QryInserir.SQL.Add('  cli_nome   = :p_cli_nome, ');
+        QryInserir.SQL.Add('  cli_cidade = :p_cli_cidade, ');
+        QryInserir.SQL.Add('  cli_uf     = :p_cli_uf ');
+        QryInserir.SQL.Add('Where id_clientes = :p_id_clientes ');
+
+        QryInserir.ParamByName('p_id_clientes').AsInteger := FId_Clientes;
+      end;
+
+      QryInserir.ParamByName('p_cli_nome').AsString   := FCli_Nome;
+      QryInserir.ParamByName('p_cli_cidade').AsString := FCli_Cidade;
+      QryInserir.ParamByName('p_cli_uf').AsString     := FCli_UF;
+      QryInserir.ExecSQL;
+
+      Result := True;
+    except
+      on E : Exception do
+      begin
+        Erro := E.Message;
+        Result := False;
+      end;
+    end;
+  finally
+    QryInserir.Destroy;
+  end;
+end;
+
+procedure TClientes.Salvar(const objClientes: TClientes);
+var
+  QryInserir: TFDQuery;
+begin
+  try
+    try
+      FConexao.Connected := False;
+      FConexao.Connected := True;
+
+      QryInserir := TFDQuery.Create( nil );
+      QryInserir.Connection := FConexao;
+
+      QryInserir.Close;
+      QryInserir.SQL.Clear;
+      QryInserir.SQL.Add('Insert into clientes (id_clientes, cli_nome, cli_cidade, cli_uf) ');
+      QryInserir.SQL.Add('Values (:p_id_clientes, :p_cli_nome, :p_cli_cidade, :p_cli_uf) ');
+      QryInserir.ParamByName('p_id_clientes').AsInteger := fnc_proximo_codigo('clientes','id_clientes');
+      QryInserir.ParamByName('p_cli_nome').AsString   := Self.Nome;
+      QryInserir.ParamByName('p_cli_cidade').AsString := Self.Cidade;
+      QryInserir.ParamByName('p_cli_uf').AsString     := Self.UF;
+      QryInserir.ExecSQL;
+    except
+      on E : Exception do
+      begin
+        raise Exception.Create(E.Message);
+      end;
+    end;
+  finally
+    QryInserir.Destroy;
+  end;
+end;
+end.

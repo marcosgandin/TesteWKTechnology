@@ -1,0 +1,163 @@
+unit Model.Produtos;
+
+interface
+
+uses
+  Windows, SysUtils, Dialogs, Classes, Controls, Forms, ComCtrls,
+  Firedac.Stan.Param, FireDAC.Comp.Client, Data.DB, unit_funcoes;
+
+type
+  TProdutos = class
+    private
+      FConexao: TFdConnection;
+      FIdProdutos : Integer;
+      FDescricao : string;
+      FVlrVenda : Double;
+    public
+      constructor Create( Conexao: TFdConnection);
+      destructor Destroy; override;
+
+      procedure Salvar(const objProduto: TProdutos);
+      function fnc_inserir_alterar(const objProduto: TProdutos; TipoOperacao: string; out Erro: string): Boolean;
+      procedure prc_deleta( id_Chave: Integer );
+      function fnc_consulta( pChave: Integer ): TFDQuery;
+
+      property Conexao: TFdConnection read FConexao write FConexao;
+      property IdProduto : Integer read FIdProdutos write FIdProdutos;
+      property Descricao : string read FDescricao write FDescricao;
+      property VlVenda: double read FVlrVenda write FVlrVenda;
+  end;
+
+var
+  QryConsulta: TFDQuery;
+
+implementation
+
+{ TProdutos }
+
+constructor TProdutos.Create(Conexao: TFdConnection);
+begin
+  FConexao := Conexao;
+
+  QryConsulta := TFDQuery.Create( nil );
+  QryConsulta.Connection := FConexao;
+end;
+
+destructor TProdutos.Destroy;
+begin
+  QryConsulta.Destroy;
+  inherited;
+end;
+
+function TProdutos.fnc_consulta(pChave: Integer): TFDQuery;
+begin
+  try
+    FConexao.Connected := False;
+    FConexao.Connected := True;
+
+    QryConsulta.Close;
+    QryConsulta.SQL.Clear;
+    QryConsulta.SQL.Add('Select id_produtos, pro_descricao, pro_vlr_venda ');
+    QryConsulta.SQL.Add('From produtos ');
+    QryConsulta.SQL.Add('Where id_produtos = :id_produtos ');
+    QryConsulta.ParamByName('id_produtos').AsInteger := pChave;
+    QryConsulta.Open;
+  finally
+    Result := QryConsulta;
+  end;
+end;
+
+function TProdutos.fnc_inserir_alterar(const objProduto: TProdutos; TipoOperacao: string;
+  out Erro: string): Boolean;
+var
+  QryInserir: TFDQuery;
+begin
+  try
+    try
+      FConexao.Connected := False;
+      FConexao.Connected := True;
+
+      QryInserir := TFDQuery.Create( nil );
+      QryInserir.Connection := FConexao;
+
+      QryInserir.Close;
+      QryInserir.SQL.Clear;
+
+      if TipoOperacao = 'INSERIR' then
+      begin
+        QryInserir.SQL.Add('Insert into produtos (pro_descricao, pro_vlr_venda) ');
+        QryInserir.SQL.Add('Values (:p_pro_descricao, :p_pro_vlr_venda) ');
+      end
+      else
+      begin
+        QryInserir.SQL.Add('Update produtos set ');
+        QryInserir.SQL.Add('  pro_descricao   = :p_pro_descricao, ');
+        QryInserir.SQL.Add('  pro_vlr_venda   = :p_pro_vlr_venda ');
+        QryInserir.SQL.Add('Where id_produtos = :p_id_produtos ');
+
+        QryInserir.ParamByName('p_id_produtos').AsInteger := FIdProdutos;
+      end;
+
+      QryInserir.ParamByName('p_pro_descricao').AsString := FDescricao;
+      QryInserir.ParamByName('p_pro_vlr_venda').AsFloat  := FVlrVenda;
+      QryInserir.ExecSQL;
+
+      Result := True;
+    except
+      on E : Exception do
+      begin
+        Erro := E.Message;
+        Result := False;
+      end;
+    end;
+  finally
+    QryInserir.Destroy;
+  end;
+end;
+
+procedure TProdutos.prc_deleta(id_Chave: Integer);
+begin
+  if fnc_criar_mensagem('Confirmação',
+                        'Excluir Dados',
+                        'Tem certeza de que deseja EXCLUIR este Produto? ',
+                        ExtractFilePath( Application.ExeName ) + '\Icons\Aviso_.png',
+                        'OK') then
+  begin
+    FConexao.Connected := False;
+    FConexao.Connected := True;
+
+    FConexao.ExecSQL('Delete from produtos where id_produtos = :id_Chave', [id_Chave]);
+  end;
+end;
+
+procedure TProdutos.Salvar(const objProduto: TProdutos);
+var
+  QryInserir: TFDQuery;
+begin
+  FDescricao := objProduto.Descricao;
+  FVlrVenda := objProduto.VlVenda;
+
+  try
+    try
+      FConexao.Connected := False;
+      FConexao.Connected := True;
+
+      QryInserir := TFDQuery.Create( nil );
+      QryInserir.Connection := FConexao;
+
+      QryInserir.Close;
+      QryInserir.SQL.Clear;
+      QryInserir.SQL.Add('Insert into produtos (pro_descricao, pro_vlr_venda) ');
+      QryInserir.SQL.Add('Values (:p_pro_descricao, :p_pro_vlr_venda) ');
+      QryInserir.ParamByName('p_pro_descricao').AsString := FDescricao;
+      QryInserir.ParamByName('p_pro_vlr_venda').AsFloat  := FVlrVenda;
+      QryInserir.ExecSQL;
+    except
+      on E : Exception do
+        raise Exception.Create(E.Message);
+    end;
+  finally
+    QryInserir.Destroy;
+  end;
+end;
+end.

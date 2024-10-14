@@ -1,0 +1,36 @@
+unit Controller.Produtos;
+
+interface
+
+uses
+  StrUtils,
+  SysUtils,
+  Model.Produtos;
+
+type
+  TControllerProdutos = class
+  public
+    function Salvar(const objProduto: TProdutos): string;
+    function GetNome(const objProduto: TProdutos): string;
+    function GetVlrVenda(const objProduto: TProdutos): currency;
+  end;
+
+implementation
+
+{ TControllerProdutos }
+
+function TControllerProdutos.Salvar(const objProduto: TProdutos): string;
+begin
+  Result := EmptyStr;
+
+  if objProduto.Descricao = EmptyStr then
+    Result := 'Nome do produto é obrigatório!';
+
+  if objProduto.VlVenda <= 0 then
+    Result := 'Valor do produto é obrigatório!';
+
+  if Result = EmptyStr then
+    objProduto.Salvar(objProduto);
+end;
+
+end.
