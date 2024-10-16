@@ -24,6 +24,7 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
 
+	Application.CreateForm(TDataModule1, DataModule1);
   if not DataModule1.Conexao.fnc_conectar_banco_dados then
   begin
     fnc_criar_mensagem('CONEXÃO AO BANCO DE DADOS',
@@ -32,8 +33,9 @@ begin
                        DataModule1.Conexao.MsgErro,
                        ExtractFilePath( Application.ExeName ) + '\Icons\Erro.png',
                        'OK');
-   	Application.CreateForm(TfrmConfigServidor, frmConfigServidor);
-  frmConfigServidor.ShowModal;
+
+    Application.CreateForm(TfrmConfigServidor, frmConfigServidor);
+    frmConfigServidor.ShowModal;
   end;
 
   Application.CreateForm(TfrmPrincipal, frmPrincipal);
